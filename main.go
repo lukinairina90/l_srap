@@ -24,14 +24,21 @@ func main() {
 	//})
 
 	// Find and visit next page links
-	c.OnHTML(`a:contains(' Характеристики ')`, func(e *colly.HTMLElement) {
-		e
+	c.OnHTML(`.characteristics-full__list`, func(e *colly.HTMLElement) {
+		// Iterate over rows of the table which contains different information
+		// about the course
+		e.ForEach(".characteristics-full__item", func(_ int, el *colly.HTMLElement) {
+			label := el.DOM.Find(".characteristics-full__label span").Text()
+			char := el.DOM.Find("a.ng-star-inserted").Text()
+
+			println(label + ": " + char)
+		})
 	})
 
-	c.OnRequest(func(e *colly.Request) {
-		fmt.Println("Charact", e.URL)
-	})
-
+	//todo add pagination
+	//add c.OnHTML to check pagination .pagination__list
+	//find next arrow item, check if it doesn`t have attr disabled or just check if href is present
+	//if not disabled, just take href from arrow and visit it
 	err := c.Visit("https://rozetka.com.ua/all-tv/c80037/sell_status=available;seller=rozetka/")
 	if err != nil {
 		return
