@@ -27,6 +27,12 @@ func main() {
 			label := el.DOM.Find(".characteristics-full__label span").Text()
 			char := el.DOM.Find("a.ng-star-inserted").Text()
 
+			// todo insert value into db here
+			// add gorm https://gorm.io/docs/
+			// create model
+			// use model for insert
+			// brew install mysql
+			// remove this println
 			println(label + ": " + char)
 		})
 	})
