@@ -16,8 +16,9 @@ import (
 
 type Product struct {
 	gorm.Model
-	ID   int
-	Name string
+	ID         int
+	OriginalID string
+	Name       string
 }
 
 type ProductChar struct {
@@ -27,6 +28,8 @@ type ProductChar struct {
 	Value     string
 }
 
+// todo move dsn variable to env and pictures to env
+// https://github.com/caarlos0/env
 func main() {
 	// смотрите https://github.com/go-sql-driver/mysql#dsn-data-source-name для подробностей
 	dsn := "root:@tcp(127.0.0.1:3306)/rozetka?charset=utf8mb4&parseTime=True&loc=Local"
@@ -66,17 +69,19 @@ func main() {
 	//Find and visit next page links
 	c.OnHTML(`.product-about__characteristics`, func(e *colly.HTMLElement) {
 		name := e.DOM.Find(".product-tabs__heading_color_gray").Text()
-		product := Product{
-			Name: name,
-		}
-
-		db.Create(&product)
 
 		codeEl := e.DOM.Closest("body").Find(".product__code")
 		codeEl.Find("span").Remove()
 		code := strings.TrimSpace(codeEl.Text())
-		//check pictures folder exist, if not created, create
 
+		product := Product{
+			Name:       name,
+			OriginalID: code,
+		}
+
+		db.Create(&product)
+
+		//check pictures folder exist, if not created, create
 		path := "pictures/" + code
 		err := os.Mkdir(path, 0700)
 		if err != nil {
@@ -93,35 +98,35 @@ func main() {
 			if err != nil {
 				log.Fatal(err)
 			}
-			fmt.Printf("File %d downlaod in current working directory", i)
 		})
-		//e.ForEach("body.thumbnail__picture", func(_ int, e *colly.HTMLElement) {
-		//	elName := e.DOM.Find(".a > img").Text()
-		//	println(elName)
-		//})
 
-		// Iterate over rows of the table which contains different information
-		// about the course
-		//e.ForEach(".characteristics-full__item", func(_ int, el *colly.HTMLElement) {
-		//	charName := el.DOM.Find(".characteristics-full__label span").Text()
-		//	charValue := el.DOM.Find("a.ng-star-inserted").Text()
-		//
-		//	db.Create(&ProductChar{
-		//		ProductID: product.ID,
-		//		Name:      charName,
-		//		Value:     charValue,
-		//	})
-		//})
+		e.ForEach("body.thumbnail__picture", func(_ int, e *colly.HTMLElement) {
+			elName := e.DOM.Find(".a > img").Text()
+			println(elName)
+		})
+
+		//Iterate over rows of the table which contains different information
+		//about the course
+		e.ForEach(".characteristics-full__item", func(_ int, el *colly.HTMLElement) {
+			charName := el.DOM.Find(".characteristics-full__label span").Text()
+			charValue := el.DOM.Find("a.ng-star-inserted").Text()
+
+			db.Create(&ProductChar{
+				ProductID: product.ID,
+				Name:      charName,
+				Value:     charValue,
+			})
+		})
 	})
 
 	//pagination
-	//c.OnHTML(`.pagination__direction--forward`, func(e *colly.HTMLElement) {
-	//	println("Next page link found:", e.Attr("href"))
-	//	err := e.Request.Visit(e.Attr("href"))
-	//	if err != nil {
-	//		return
-	//	}
-	//})
+	c.OnHTML(`.pagination__direction--forward`, func(e *colly.HTMLElement) {
+		println("Next page link found:", e.Attr("href"))
+		err := e.Request.Visit(e.Attr("href"))
+		if err != nil {
+			return
+		}
+	})
 
 	err = c.Visit("https://rozetka.com.ua/all-tv/c80037/sell_status=available;seller=rozetka/")
 	if err != nil {
