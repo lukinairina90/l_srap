@@ -1,12 +1,15 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"github.com/PuerkitoBio/goquery"
 	"github.com/gocolly/colly"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
+	"io"
 	"log"
+	"net/http"
 	"os"
 	"strings"
 )
@@ -36,6 +39,8 @@ func main() {
 	if err = db.AutoMigrate(&Product{}, &ProductChar{}); err != nil {
 		return
 	}
+
+	//todo check folder exists pictures
 
 	c := colly.NewCollector()
 	//Find and visit all links
@@ -71,9 +76,17 @@ func main() {
 			log.Println(err)
 		}
 
-		//https://content.rozetka.com.ua/goods/images/big/237518862.jpg
-		e.DOM.Closest("body").Find(".thumbnail__picture[src*='images']").Each(func(_ int, s *goquery.Selection) {
-			fmt.Println(s.Attr("src"))
+		e.DOM.Closest("body").Find(".thumbnail__picture[src*='images']").Each(func(i int, s *goquery.Selection) {
+			thumbSrc, _ := s.Attr("src")
+			thumbSplit := strings.Split(thumbSrc, "/")
+			thumbPic := thumbSplit[len(thumbSplit)-1]
+			thumbPic = thumbPic[:len(thumbPic)-4]
+
+			err := downloadFile(thumbSrc, path, thumbPic)
+			if err != nil {
+				log.Fatal(err)
+			}
+			fmt.Printf("File %d downlaod in current working directory", i)
 		})
 		//e.ForEach("body.thumbnail__picture", func(_ int, e *colly.HTMLElement) {
 		//	elName := e.DOM.Find(".a > img").Text()
@@ -107,6 +120,35 @@ func main() {
 	if err != nil {
 		return
 	}
+}
+
+func downloadFile(url, path, picID string) error {
+	//Get the response bytes from the url
+	//todo get full size pictures
+	//https://content.rozetka.com.ua/goods/images/big/237518862.jpg
+	response, err := http.Get(url)
+	if err != nil {
+		return err
+	}
+	defer response.Body.Close()
+
+	if response.StatusCode != 200 {
+		return errors.New("received non 200 response code")
+	}
+	//Create an empty file
+	file, err := os.Create(path + "/" + picID + ".jpg")
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	//Write the bytes to the fiel
+	_, err = io.Copy(file, response.Body)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // save all picures into this folder
