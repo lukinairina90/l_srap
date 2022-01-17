@@ -7,6 +7,7 @@ import (
 	"gorm.io/gorm"
 	"log"
 	"os"
+	"strings"
 )
 
 type Product struct {
@@ -57,21 +58,20 @@ func main() {
 		}
 
 		db.Create(&product)
-		//fmt.Println(e.DOM.Closest(""))
 
-		e.DOM
-		e.ForEach(".product__code-accent", func(i int, element *colly.HTMLElement) {
-			picIDpath := e.DOM.Find(".product__code-accent").Text()
-			//IdPath := os.Mkdir(picIDpath, 0700)
-			//
+		codeEl := e.DOM.Closest("body").Find(".product__code")
+		codeEl.Find("span").Remove()
+		code := strings.TrimSpace(codeEl.Text())
+		//check picture folder exist, if not created, create
 
-			path := "./picture/" + picIDpath
-			println(path)
-			err := os.Mkdir(path, 0700)
-			if err != nil {
-				log.Println(err)
-			}
-		})
+		path := "pictures/" + code
+		err := os.Mkdir(path, 0700)
+		if err != nil {
+			log.Println(err)
+		}
+
+		//https://content.rozetka.com.ua/goods/images/big/237518862.jpg
+		e.DOM.Closest("body").Find("картинка").Each()
 
 		// Iterate over rows of the table which contains different information
 		// about the course
