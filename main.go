@@ -5,6 +5,8 @@ import (
 	"github.com/gocolly/colly"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
+	"log"
+	"os"
 )
 
 type Product struct {
@@ -55,29 +57,44 @@ func main() {
 		}
 
 		db.Create(&product)
+		//fmt.Println(e.DOM.Closest(""))
+
+		e.DOM
+		e.ForEach(".product__code-accent", func(i int, element *colly.HTMLElement) {
+			picIDpath := e.DOM.Find(".product__code-accent").Text()
+			//IdPath := os.Mkdir(picIDpath, 0700)
+			//
+
+			path := "./picture/" + picIDpath
+			println(path)
+			err := os.Mkdir(path, 0700)
+			if err != nil {
+				log.Println(err)
+			}
+		})
 
 		// Iterate over rows of the table which contains different information
 		// about the course
-		e.ForEach(".characteristics-full__item", func(_ int, el *colly.HTMLElement) {
-			charName := el.DOM.Find(".characteristics-full__label span").Text()
-			charValue := el.DOM.Find("a.ng-star-inserted").Text()
-
-			db.Create(&ProductChar{
-				ProductID: product.ID,
-				Name:      charName,
-				Value:     charValue,
-			})
-		})
+		//e.ForEach(".characteristics-full__item", func(_ int, el *colly.HTMLElement) {
+		//	charName := el.DOM.Find(".characteristics-full__label span").Text()
+		//	charValue := el.DOM.Find("a.ng-star-inserted").Text()
+		//
+		//	db.Create(&ProductChar{
+		//		ProductID: product.ID,
+		//		Name:      charName,
+		//		Value:     charValue,
+		//	})
+		//})
 	})
 
 	//pagination
-	c.OnHTML(`.pagination__direction--forward`, func(e *colly.HTMLElement) {
-		println("Next page link found:", e.Attr("href"))
-		err := e.Request.Visit(e.Attr("href"))
-		if err != nil {
-			return
-		}
-	})
+	//c.OnHTML(`.pagination__direction--forward`, func(e *colly.HTMLElement) {
+	//	println("Next page link found:", e.Attr("href"))
+	//	err := e.Request.Visit(e.Attr("href"))
+	//	if err != nil {
+	//		return
+	//	}
+	//})
 
 	err = c.Visit("https://rozetka.com.ua/all-tv/c80037/sell_status=available;seller=rozetka/")
 	if err != nil {

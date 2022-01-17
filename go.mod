@@ -6,6 +6,9 @@ require (
 	github.com/gocolly/colly v1.2.0
 	gorm.io/driver/mysql v1.2.3
 	gorm.io/gorm v1.22.5
+)
+
+require (
 	github.com/PuerkitoBio/goquery v1.8.0 // indirect
 	github.com/andybalholm/cascadia v1.3.1 // indirect
 	github.com/antchfx/htmlquery v1.2.4 // indirect
