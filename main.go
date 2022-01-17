@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/PuerkitoBio/goquery"
 	"github.com/gocolly/colly"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
@@ -62,7 +63,7 @@ func main() {
 		codeEl := e.DOM.Closest("body").Find(".product__code")
 		codeEl.Find("span").Remove()
 		code := strings.TrimSpace(codeEl.Text())
-		//check picture folder exist, if not created, create
+		//check pictures folder exist, if not created, create
 
 		path := "pictures/" + code
 		err := os.Mkdir(path, 0700)
@@ -71,7 +72,13 @@ func main() {
 		}
 
 		//https://content.rozetka.com.ua/goods/images/big/237518862.jpg
-		e.DOM.Closest("body").Find("картинка").Each()
+		e.DOM.Closest("body").Find(".thumbnail__picture[src*='images']").Each(func(_ int, s *goquery.Selection) {
+			fmt.Println(s.Attr("src"))
+		})
+		//e.ForEach("body.thumbnail__picture", func(_ int, e *colly.HTMLElement) {
+		//	elName := e.DOM.Find(".a > img").Text()
+		//	println(elName)
+		//})
 
 		// Iterate over rows of the table which contains different information
 		// about the course
@@ -102,9 +109,7 @@ func main() {
 	}
 }
 
-// todo add pictures folder(don`t forget about gitignore)
 // save all picures into this folder
 // add id from rozetka to products table (Код:  293091343) - original_id
 // after save of the new product if you will have any pictures,
-// create folder named as id from rozetka
 // put all pictures
