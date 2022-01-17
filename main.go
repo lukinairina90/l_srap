@@ -40,7 +40,15 @@ func main() {
 		return
 	}
 
-	//todo check folder exists pictures
+	//check folder exists pictures
+	if _, err := os.Stat("pictures"); err != nil {
+		if os.IsNotExist(err) {
+			err := os.Mkdir("pictures", 0700)
+			if err != nil {
+				log.Println(err)
+			}
+		}
+	}
 
 	c := colly.NewCollector()
 	//Find and visit all links
@@ -58,7 +66,6 @@ func main() {
 	//Find and visit next page links
 	c.OnHTML(`.product-about__characteristics`, func(e *colly.HTMLElement) {
 		name := e.DOM.Find(".product-tabs__heading_color_gray").Text()
-		//todo write into products
 		product := Product{
 			Name: name,
 		}
@@ -126,6 +133,8 @@ func downloadFile(url, path, picID string) error {
 	//Get the response bytes from the url
 	//todo get full size pictures
 	//https://content.rozetka.com.ua/goods/images/big/237518862.jpg
+	//https://content.rozetka.com.ua/goods/images/preview/240240612.jpg
+	url = strings.Replace(url, "preview/", "big/", 1)
 	response, err := http.Get(url)
 	if err != nil {
 		return err
