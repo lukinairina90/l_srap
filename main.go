@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/PuerkitoBio/goquery"
+	"github.com/caarlos0/env/v6"
 	"github.com/gocolly/colly"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
@@ -12,7 +13,20 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"time"
 )
+
+// 	dsn := "root:@tcp(127.0.0.1:3306)/rozetka?charset=utf8mb4&parseTime=True&loc=Local"
+//         {Home:/your/home Port:3000 IsProduction:true Hosts:[host1 host2 host3] Duration:1s}
+type config struct {
+	Home         string        `env:"HOME"`
+	Port         int           `env:"PORT" envDefault:"3306"`
+	Password     string        `env:"unset"`
+	IsProduction bool          `env:"PRODUCTION"`
+	Hosts        []string      `env:"HOSTS" envSeparator:":"`
+	Duration     time.Duration `env:"DURATION"`
+	TempFolder   string        `env:"TEMP_FOLDER" envDefault:"${HOME}/tmp" envExpand:"true"`
+}
 
 type Product struct {
 	gorm.Model
@@ -31,9 +45,17 @@ type ProductChar struct {
 // todo move dsn variable to env and pictures to env
 // https://github.com/caarlos0/env
 func main() {
+	// ENV Carloos
+	cfg := config{}
+	if err := env.Parse(&cfg); err != nil {
+		fmt.Printf("%+v\n", err)
+	}
+
+	fmt.Printf("CONFIGGGG  %+v\n", cfg)
+
 	// смотрите https://github.com/go-sql-driver/mysql#dsn-data-source-name для подробностей
-	dsn := "root:@tcp(127.0.0.1:3306)/rozetka?charset=utf8mb4&parseTime=True&loc=Local"
-	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
+	//dsn := "root:@tcp(127.0.0.1:3306)/rozetka?charset=utf8mb4&parseTime=True&loc=Local"
+	db, err := gorm.Open(mysql.Open(cfg.Home), &gorm.Config{})
 	if err != nil {
 		return
 	}
